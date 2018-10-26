@@ -40,17 +40,15 @@ public class InvertedPendulumInit extends Application{
         RPs - rps
     */
     /* Constants for the electric motor and pendulum configs*/
-    private static final double INITIAL_THETA = 5.0;
-    private static final double INITIAL_OMEGA = 20.0;
-
     private static final String FILE_NAME = "profile_coords";
 
     public static final double constantOfProportionality = 1;
-    public static double currentTheta = INITIAL_THETA;
-    public static double currentAngularVelocity = INITIAL_OMEGA;
+    public static double currentTheta = 0;
+    public static double currentAngularVelocity = 0;
     public static double currentTorque = 0;
     public static final double PENDULUM_MASS = 1.0;
-    public static final double PENDULUM_STRING_LENGTH = 1.0;
+    public static final double PENDULUM_STRING_LENGTH = 3.0;
+    public static final double G = 9.8;
     public static FuzzyController fc;
 
     private static void drawGraphUsingPython(){
@@ -115,6 +113,10 @@ public class InvertedPendulumInit extends Application{
         takeProfileInput(sc, angleTraingleProfileInput, angleTrapezoidalProfileInput);
         takeProfileInput(sc, angularVelocityTraingleProfileInput, angularVelocityTrapezoidalProfileInput);
         takeProfileInput(sc, currentTraingleProfileInput, currentTrapezoidalProfileInput);
+
+        System.out.println("Do we consider Gravity ? (0 / 1)");
+        int considerGravity = sc.nextInt();
+
         // 1. Membership Functions . See Normalization if needed.
         DeployMembershipFunction angleProfile
                 = new DeployMembershipFunction(Utility.linguisticIdentifier[0], 2);
@@ -144,7 +146,7 @@ public class InvertedPendulumInit extends Application{
             exc.printStackTrace();
         }
         // Initialise GUI
-        fc = new FuzzyController(angleProfile, angularVelocityProfile, currentProfile);
+        fc = new FuzzyController(angleProfile, angularVelocityProfile, currentProfile, considerGravity);
         Application.launch(args);
         // Get Current value an compute new Values for the GUI then refresh GUI.
 
@@ -160,16 +162,16 @@ public class InvertedPendulumInit extends Application{
         //Pendulum Line
         final Line pendulumHand = new Line(0, 175, 0, 0);
         pendulumHand.setTranslateX(450);
-        pendulumHand.setTranslateY(350);
+        pendulumHand.setTranslateY(90);
 
         //Pendulum Ball
-        final Circle circle = new Circle(0, 0, 20);
+        final Circle circle = new Circle(0, 0, 30);
         circle.setTranslateX(450);
-        circle.setTranslateY(350);
-        circle.setFill(Color.RED);
+        circle.setTranslateY(90);
+        circle.setFill(Color.DARKCYAN);
 
-        final Rectangle rectangle = new Rectangle(350,525,200,30);
-        rectangle.setFill(Color.BLACK);
+        final Rectangle rectangle = new Rectangle(350,265,200,30);
+        rectangle.setFill(Color.DIMGREY);
 
         final Label label = new Label("Angular Displacement :");
         label.setLayoutY(5);
@@ -190,19 +192,19 @@ public class InvertedPendulumInit extends Application{
         submitInitialConfig.setTranslateX(700);
 
         final Button pause = new Button("Pause");
-        pause.setTranslateX(520);
-        pause.setTranslateY(300);
+        pause.setTranslateX(600);
+        pause.setTranslateY(90);
 
         final TextArea textArea = new TextArea();
-        textArea.setTranslateX(50);
+        textArea.setTranslateX(100);
         textArea.setPromptText("FuzzyController Output will be displaced");
-        textArea.setTranslateY(50);
+        textArea.setTranslateY(350);
         textArea.setPrefWidth(700);
         textArea.setPrefHeight(200);
 
         final Button play = new Button("Play");
-        play.setTranslateX(520);
-        play.setTranslateY(350);
+        play.setTranslateX(650);
+        play.setTranslateY(90);
 
         group.getChildren().add(circle);
         group.getChildren().add(pendulumHand);
@@ -223,17 +225,17 @@ public class InvertedPendulumInit extends Application{
                     double velocity = Double.parseDouble(angularVelocity.getText());
                     @Override
                     public void handle(ActionEvent event) {
-                        Color color[] = new Color[]{Color.RED, Color.ORANGE, Color.BLUE, Color.PURPLE, Color.PINK};
-                        int itr = (int)Math.floor(Math.random() * color.length);
+                        //Color color[] = new Color[]{Color.RED, Color.ORANGE, Color.BLUE, Color.PURPLE, Color.PINK};
+                        //int itr = (int)Math.floor(Math.random() * color.length);
                         double angularAcceleration = fc.calculateAngularAcceleration(velocity, displacement);
                         String x = String.format( "angularVelocity.input = %s and angle.input = %s -> current.output = %s",
                                 Double.toString(velocity), Double.toString(displacement),angularAcceleration);
                         textArea.appendText(x+"\n");
                         displacement = displacement+velocity*0.01+0.5*angularAcceleration*0.01*0.01;
                         velocity = velocity+angularAcceleration*.01;
-                        circle.setFill(color[itr]);
-                        pendulumHand.setFill(color[itr]);
-                        rectangle.setFill(color[itr]);
+                        //circle.setFill(color[itr]);
+                        //pendulumHand.setFill(color[itr]);
+                        //rectangle.setFill(color[itr]);
                         secondRotate.setAngle(displacement);
                     }
                 }));

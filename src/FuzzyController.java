@@ -12,13 +12,15 @@ public class FuzzyController  {
 
     private DeployMembershipFunction angleProfile, angularVelocityProfile, currentProfile;
     private HashMap<String, String> controlChart;
+    private int considerGravity;
     public static double currentActualValue = 0;
 
     public FuzzyController(DeployMembershipFunction angleProfile, DeployMembershipFunction angularVelocityProfile,
-                           DeployMembershipFunction currentProfile){
+                           DeployMembershipFunction currentProfile, int considerGravity){
             this.angleProfile = angleProfile;
             this.angularVelocityProfile = angularVelocityProfile;
             this.currentProfile = currentProfile;
+            this.considerGravity = considerGravity;
             initialiseControlChart();
     }
 
@@ -33,23 +35,18 @@ public class FuzzyController  {
         }
 
         currentActualValue = centroidCurrentActualValue(currentActualOutput);
-        System.out.println("Current output :: " + currentActualValue);
+        //System.out.println("Current output :: " + currentActualValue);
         InvertedPendulumInit.currentTorque = InvertedPendulumInit.constantOfProportionality * currentActualValue;
 
-        //Refresh GUI
         double momentOfInertia = Utility.getMomentOfInertia(InvertedPendulumInit.PENDULUM_MASS,
                 InvertedPendulumInit.PENDULUM_STRING_LENGTH);
 
-        /*InvertedPendulumInit.currentTheta = Utility.getUpdatedAngle(InvertedPendulumInit.TIME,
-                InvertedPendulumInit.currentTorque, currTheta, currVelocity, momentOfInertia);
+        double gravityTorque
+                = (this.considerGravity * InvertedPendulumInit.PENDULUM_MASS * InvertedPendulumInit.G
+                * Math.sin(Math.toRadians(currTheta)) * InvertedPendulumInit.PENDULUM_STRING_LENGTH);
 
-        InvertedPendulumInit.currentAngularVelocity = Utility.getUpdatedAngularVelocity(InvertedPendulumInit.TIME,
-                InvertedPendulumInit.currentTorque, currTheta, currVelocity, momentOfInertia);*/
-
-        //REFRESH GUI
-        return InvertedPendulumInit.currentTorque / momentOfInertia;
-
-
+        return ( InvertedPendulumInit.currentTorque + gravityTorque ) / momentOfInertia;
+        //return InvertedPendulumInit.currentTorque / momentOfInertia;
     }
 
     private HashMap<String, Double> getThetaFuzzyOutput(double currTheta){

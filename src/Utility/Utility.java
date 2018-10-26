@@ -30,15 +30,4 @@ public class Utility {
         return m * r * r;
     }
 
-    public static double getUpdatedAngle(double time, double torque, double theta, double omega, double moi){
-        double alpha = torque / moi;
-        theta = theta + omega * time + 0.5 * alpha * time * time;
-        return theta;
-    }
-
-    public static double getUpdatedAngularVelocity(double time, double torque, double theta, double omega, double moi){
-        double alpha = torque / moi;
-        omega = omega + alpha * time;
-        return omega;
-    }
 }
