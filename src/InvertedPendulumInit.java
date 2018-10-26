@@ -43,14 +43,12 @@ public class InvertedPendulumInit extends Application{
     private static final double INITIAL_THETA = 5.0;
     private static final double INITIAL_OMEGA = 20.0;
 
-    private static final String FILE_NAME = "profile_coords.txt";
+    private static final String FILE_NAME = "profile_coords";
 
     public static final double constantOfProportionality = 1;
     public static double currentTheta = INITIAL_THETA;
     public static double currentAngularVelocity = INITIAL_OMEGA;
     public static double currentTorque = 0;
-    public static final double TIME = 1.0;
-    public static final double G = 9.8;
     public static final double PENDULUM_MASS = 1.0;
     public static final double PENDULUM_STRING_LENGTH = 1.0;
     public static FuzzyController fc;
@@ -64,12 +62,12 @@ public class InvertedPendulumInit extends Application{
         }
     }
 
-    private static void drawProfile(DeployMembershipFunction profile) throws IOException{
-        File f = new File(FILE_NAME);
+    private static void drawProfile(DeployMembershipFunction profile, int itr) throws IOException{
+        File f = new File(FILE_NAME+ "_" + itr + ".txt");
         if(f.exists())
             f.delete();
         f.createNewFile();
-        FileWriter fw = new FileWriter(FILE_NAME);
+        FileWriter fw = new FileWriter(f.getName());
         BufferedWriter bw = new BufferedWriter(fw);
         for(Point point : profile.getTriangularMembership().getProfileCoordinates()){
             bw.write(point.toString() + "\n");
@@ -82,7 +80,6 @@ public class InvertedPendulumInit extends Application{
         }
         bw.close();
         fw.close();
-        drawGraphUsingPython();
     }
 
     private static void takeProfileInput(Scanner sc, Point []triangleProfile, Point [][]trapezoidalProfile){
@@ -138,9 +135,10 @@ public class InvertedPendulumInit extends Application{
 
         //Draw Profile Graphs
         try{
-            drawProfile(angleProfile);
-            drawProfile(angularVelocityProfile);
-            drawProfile(currentProfile);
+            drawProfile(angleProfile, 1);
+            drawProfile(angularVelocityProfile, 2);
+            drawProfile(currentProfile, 3);
+            drawGraphUsingPython();
         }catch (IOException exc){
             System.out.println("Error Drawing Profile........");
             exc.printStackTrace();
