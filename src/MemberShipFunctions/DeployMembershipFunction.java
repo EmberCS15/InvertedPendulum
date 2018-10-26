@@ -1,6 +1,6 @@
 package MemberShipFunctions;
 
-import Utility.MembershipUtility;
+import Utility.Utility;
 import Utility.Point;
 
 import java.util.Arrays;
@@ -47,7 +47,7 @@ public class DeployMembershipFunction {
     public void initiateTriangularMembersipFunction(Point []ptr){
         sortPointsOnX(ptr);
         this.triangularMembership
-                = new TriangularMembership(MembershipUtility.profileIdentifier[0], ptr[0], ptr[1], ptr[2]);
+                = new TriangularMembership(Utility.profileIdentifier[0], ptr[0], ptr[1], ptr[2]);
     }
 
     public void initiateTrapezoidalMembersipFunction(Point p[][]){
@@ -55,7 +55,7 @@ public class DeployMembershipFunction {
         for(int i=0;i<p.length;i++){
             sortPointsOnX(p[i]);
             this.trapezoidalMembership[i]
-                    = new TrapezoidalMembership(MembershipUtility.profileIdentifier[pid++], p[i][0], p[i][1], p[i][2], p[i][3]);
+                    = new TrapezoidalMembership(Utility.profileIdentifier[pid++], p[i][0], p[i][1], p[i][2], p[i][3]);
         }
     }
 

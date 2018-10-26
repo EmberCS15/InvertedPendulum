@@ -1,6 +1,6 @@
 package MemberShipFunctions;
 
-import Utility.MembershipUtility;
+import Utility.Utility;
 import Utility.Point;
 
 import java.util.Arrays;
@@ -25,8 +25,8 @@ public class TrapezoidalMembership extends BaseMembershipFunction implements Mem
         this.pointB = pointB;
         this.pointC = pointC;
         this.pointD = pointD;
-        this.slopeLineAB = MembershipUtility.computeSlope(pointA, pointB);
-        this.slopeLineCD = MembershipUtility.computeSlope(pointC, pointD);
+        this.slopeLineAB = Utility.computeSlope(pointA, pointB);
+        this.slopeLineCD = Utility.computeSlope(pointC, pointD);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class TrapezoidalMembership extends BaseMembershipFunction implements Mem
                 yValue = this.pointB.getYcoord() + (x - this.pointB.getXcoord()) * this.slopeLineAB;
             }else{
                 yValue = this.pointC.getYcoord() + (x - this.pointC.getXcoord()) * this.slopeLineCD;
-                System.out.println("Hello : " + yValue+ " " + this.slopeLineCD + " " + this.pointD.toString());
+                //System.out.println("Hello : " + yValue+ " " + this.slopeLineCD + " " + this.pointD.toString());
             }
         }
         return yValue;

@@ -1,6 +1,6 @@
 import MemberShipFunctions.DeployMembershipFunction;
 import MemberShipFunctions.TrapezoidalMembership;
-import Utility.MembershipUtility;
+import Utility.Utility;
 import Utility.Point;
 
 import java.util.ArrayList;
@@ -8,49 +8,48 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FuzzyThread implements Runnable {
+public class FuzzyController  {
 
     private DeployMembershipFunction angleProfile, angularVelocityProfile, currentProfile;
     private HashMap<String, String> controlChart;
     public static double currentActualValue = 0;
-    Thread t;
 
-    public FuzzyThread(DeployMembershipFunction angleProfile, DeployMembershipFunction angularVelocityProfile,
-                       DeployMembershipFunction currentProfile){
+    public FuzzyController(DeployMembershipFunction angleProfile, DeployMembershipFunction angularVelocityProfile,
+                           DeployMembershipFunction currentProfile){
             this.angleProfile = angleProfile;
             this.angularVelocityProfile = angularVelocityProfile;
             this.currentProfile = currentProfile;
             initialiseControlChart();
-            t = new Thread(this);
-            t.start();
     }
 
-    @Override
-    public void run() {
-        while(true){
-            double currTheta = InvertedPendulumInit.currentTheta,
-                    currVelocity = InvertedPendulumInit.currentAngularVelocity;
-
-            HashMap<String, Double> thetaFuzzyOutput = getThetaFuzzyOutput(currTheta);
-            HashMap<String, Double> angularVelocityFuzzyOutput = getAngularVelocityFuzzyOutput(currVelocity);
-            ArrayList<ArrayList<Double>> currentActualOutput = new ArrayList<>();
-            for(Map.Entry<String, Double> theta:thetaFuzzyOutput.entrySet()){
-                for(Map.Entry<String, Double> omega : angularVelocityFuzzyOutput.entrySet()){
-                    currentActualOutput.add(defuzzifyCurrentValue(theta, omega));
-                }
-            }
-
-            currentActualValue = centroidCurrentActualValue(currentActualOutput);
-            System.out.println("Current output :: " + currentActualValue);
-            InvertedPendulumInit.currentTorque = InvertedPendulumInit.constantOfProportionality * currentActualValue;
-            //Refresh GUI
-            try {
-                Thread.sleep(10000);
-            }catch(InterruptedException exc){
-                System.out.println("Thread Sleep Exception :: InterruptedException");
-                exc.printStackTrace();
+    public double calculateAngularAcceleration(double currTheta, double currVelocity) {
+        HashMap<String, Double> thetaFuzzyOutput = getThetaFuzzyOutput(currTheta);
+        HashMap<String, Double> angularVelocityFuzzyOutput = getAngularVelocityFuzzyOutput(currVelocity);
+        ArrayList<ArrayList<Double>> currentActualOutput = new ArrayList<>();
+        for(Map.Entry<String, Double> theta:thetaFuzzyOutput.entrySet()){
+            for(Map.Entry<String, Double> omega : angularVelocityFuzzyOutput.entrySet()){
+                currentActualOutput.add(defuzzifyCurrentValue(theta, omega));
             }
         }
+
+        currentActualValue = centroidCurrentActualValue(currentActualOutput);
+        System.out.println("Current output :: " + currentActualValue);
+        InvertedPendulumInit.currentTorque = InvertedPendulumInit.constantOfProportionality * currentActualValue;
+
+        //Refresh GUI
+        double momentOfInertia = Utility.getMomentOfInertia(InvertedPendulumInit.PENDULUM_MASS,
+                InvertedPendulumInit.PENDULUM_STRING_LENGTH);
+
+        /*InvertedPendulumInit.currentTheta = Utility.getUpdatedAngle(InvertedPendulumInit.TIME,
+                InvertedPendulumInit.currentTorque, currTheta, currVelocity, momentOfInertia);
+
+        InvertedPendulumInit.currentAngularVelocity = Utility.getUpdatedAngularVelocity(InvertedPendulumInit.TIME,
+                InvertedPendulumInit.currentTorque, currTheta, currVelocity, momentOfInertia);*/
+
+        //REFRESH GUI
+        return InvertedPendulumInit.currentTorque / momentOfInertia;
+
+
     }
 
     private HashMap<String, Double> getThetaFuzzyOutput(double currTheta){
@@ -62,7 +61,7 @@ public class FuzzyThread implements Runnable {
             thetaFuzzyValues.put(trapezoid.getMembershipId(), trapezoid.getMembershipValue(currTheta));
         }
 
-        System.out.println("Theta Values :: " + thetaFuzzyValues);
+        //System.out.println("Theta Values :: " + thetaFuzzyValues);
         return thetaFuzzyValues;
     }
 
@@ -75,7 +74,7 @@ public class FuzzyThread implements Runnable {
             angularVelocityFuzzyValues.put(trapezoid.getMembershipId(), trapezoid.getMembershipValue(currVelocity));
         }
 
-        System.out.println("Theta Values :: " + angularVelocityFuzzyValues);
+        //System.out.println("Omega Values :: " + angularVelocityFuzzyValues);
         return angularVelocityFuzzyValues;
     }
 
@@ -91,12 +90,12 @@ public class FuzzyThread implements Runnable {
     }
 
     private ArrayList<Double> defuzzifyCurrentValue(Map.Entry<String, Double> theta, Map.Entry<String, Double> omega){
-        System.out.println("Profiles :: " + theta.getKey() + " " +  omega.getKey());
-        System.out.println("Values :: " + theta.getValue() + " " +  omega.getValue());
+        //System.out.println("Profiles :: " + theta.getKey() + " " +  omega.getKey());
+        //System.out.println("Values :: " + theta.getValue() + " " +  omega.getValue());
         double currentFuzzyValue = Math.min(theta.getValue(), omega.getValue());
         String controlChartKey = theta.getKey() + "_" + omega.getKey();
         String selectCurrentProfile = controlChart.get(controlChartKey);
-        System.out.println("Current Fuzzy Value :: " + selectCurrentProfile + " " + currentFuzzyValue);
+        //System.out.println("Current Fuzzy Value :: " + selectCurrentProfile + " " + currentFuzzyValue);
         double xValues[] = new double[4];
         ArrayList<Double> centroidAndArea = new ArrayList<>();
         if(selectCurrentProfile.equals(currentProfile.getTriangularMembership().getMembershipId())){
@@ -141,23 +140,23 @@ public class FuzzyThread implements Runnable {
 
     private void initialiseControlChart(){
         controlChart = new HashMap<String, String>();
-        controlChart.put(MembershipUtility.profileIdentifier[2]+"_"+MembershipUtility.profileIdentifier[2],
-                MembershipUtility.profileIdentifier[4]);
-        controlChart.put(MembershipUtility.profileIdentifier[2]+"_"+MembershipUtility.profileIdentifier[0],
-                MembershipUtility.profileIdentifier[3]);
-        controlChart.put(MembershipUtility.profileIdentifier[2]+"_"+MembershipUtility.profileIdentifier[3],
-                MembershipUtility.profileIdentifier[0]);
-        controlChart.put(MembershipUtility.profileIdentifier[0]+"_"+MembershipUtility.profileIdentifier[2],
-                MembershipUtility.profileIdentifier[3]);
-        controlChart.put(MembershipUtility.profileIdentifier[0]+"_"+MembershipUtility.profileIdentifier[0],
-                MembershipUtility.profileIdentifier[0]);
-        controlChart.put(MembershipUtility.profileIdentifier[0]+"_"+MembershipUtility.profileIdentifier[3],
-                MembershipUtility.profileIdentifier[2]);
-        controlChart.put(MembershipUtility.profileIdentifier[3]+"_"+MembershipUtility.profileIdentifier[2],
-                MembershipUtility.profileIdentifier[0]);
-        controlChart.put(MembershipUtility.profileIdentifier[3]+"_"+MembershipUtility.profileIdentifier[0],
-                MembershipUtility.profileIdentifier[2]);
-        controlChart.put(MembershipUtility.profileIdentifier[3]+"_"+MembershipUtility.profileIdentifier[3],
-                MembershipUtility.profileIdentifier[1]);
+        controlChart.put(Utility.profileIdentifier[2]+"_"+ Utility.profileIdentifier[2],
+                Utility.profileIdentifier[4]);
+        controlChart.put(Utility.profileIdentifier[2]+"_"+ Utility.profileIdentifier[0],
+                Utility.profileIdentifier[3]);
+        controlChart.put(Utility.profileIdentifier[2]+"_"+ Utility.profileIdentifier[3],
+                Utility.profileIdentifier[0]);
+        controlChart.put(Utility.profileIdentifier[0]+"_"+ Utility.profileIdentifier[2],
+                Utility.profileIdentifier[3]);
+        controlChart.put(Utility.profileIdentifier[0]+"_"+ Utility.profileIdentifier[0],
+                Utility.profileIdentifier[0]);
+        controlChart.put(Utility.profileIdentifier[0]+"_"+ Utility.profileIdentifier[3],
+                Utility.profileIdentifier[2]);
+        controlChart.put(Utility.profileIdentifier[3]+"_"+ Utility.profileIdentifier[2],
+                Utility.profileIdentifier[0]);
+        controlChart.put(Utility.profileIdentifier[3]+"_"+ Utility.profileIdentifier[0],
+                Utility.profileIdentifier[2]);
+        controlChart.put(Utility.profileIdentifier[3]+"_"+ Utility.profileIdentifier[3],
+                Utility.profileIdentifier[1]);
     }
 }

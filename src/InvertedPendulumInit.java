@@ -1,14 +1,34 @@
 import MemberShipFunctions.DeployMembershipFunction;
 import MemberShipFunctions.TrapezoidalMembership;
-import Utility.MembershipUtility;
 import Utility.Point;
+import Utility.Utility;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Rotate;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
-public class InvertedPendulumInit {
+
+
+public class InvertedPendulumInit extends Application{
 
     /*
         We assume the stick holding the pendulum to be negligible and the torgue resulting only due to the mass
@@ -20,13 +40,8 @@ public class InvertedPendulumInit {
         RPs - rps
     */
     /* Constants for the electric motor and pendulum configs*/
-    private static final double G = 9.8;
-    private static final double PENDULUM_MASS = 1.0;
-    private static final double INITIAL_THETA = 0.0;
-    private static final double INITIAL_OMEGA = 0.0;
-    private static final double EFFICIENCY = 1.0;
-    private static final double VOLTAGE = 240.0;
-    private static final double RPS = 20;
+    private static final double INITIAL_THETA = 5.0;
+    private static final double INITIAL_OMEGA = 20.0;
 
     private static final String FILE_NAME = "profile_coords.txt";
 
@@ -34,6 +49,12 @@ public class InvertedPendulumInit {
     public static double currentTheta = INITIAL_THETA;
     public static double currentAngularVelocity = INITIAL_OMEGA;
     public static double currentTorque = 0;
+    public static final double TIME = 1.0;
+    public static final double G = 9.8;
+    public static final double PENDULUM_MASS = 1.0;
+    public static final double PENDULUM_STRING_LENGTH = 1.0;
+    public static FuzzyController fc;
+
     private static void drawGraphUsingPython(){
         String[] callAndArgs= {"\"python\"","-u","\"get_profile_plot.py\""};
         try {
@@ -99,11 +120,11 @@ public class InvertedPendulumInit {
         takeProfileInput(sc, currentTraingleProfileInput, currentTrapezoidalProfileInput);
         // 1. Membership Functions . See Normalization if needed.
         DeployMembershipFunction angleProfile
-                = new DeployMembershipFunction(MembershipUtility.linguisticIdentifier[0], 2);
+                = new DeployMembershipFunction(Utility.linguisticIdentifier[0], 2);
         DeployMembershipFunction angularVelocityProfile
-                = new DeployMembershipFunction(MembershipUtility.linguisticIdentifier[1], 2);
+                = new DeployMembershipFunction(Utility.linguisticIdentifier[1], 2);
         DeployMembershipFunction currentProfile
-                = new DeployMembershipFunction(MembershipUtility.linguisticIdentifier[2], 4);
+                = new DeployMembershipFunction(Utility.linguisticIdentifier[2], 4);
 
         // Initialising Profiles
         angleProfile.initiateTriangularMembersipFunction(angleTraingleProfileInput);
@@ -116,18 +137,125 @@ public class InvertedPendulumInit {
         currentProfile.initiateTrapezoidalMembersipFunction(currentTrapezoidalProfileInput);
 
         //Draw Profile Graphs
-        /*try{
+        try{
             drawProfile(angleProfile);
             drawProfile(angularVelocityProfile);
             drawProfile(currentProfile);
         }catch (IOException exc){
             System.out.println("Error Drawing Profile........");
             exc.printStackTrace();
-        }*/
+        }
         // Initialise GUI
-        // Run GUI On this Thread and run fuzzification on a separate thread
-        FuzzyThread fuzzyThread = new FuzzyThread(angleProfile, angularVelocityProfile, currentProfile);
-
+        fc = new FuzzyController(angleProfile, angularVelocityProfile, currentProfile);
+        Application.launch(args);
         // Get Current value an compute new Values for the GUI then refresh GUI.
+
+    }
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        final Group group = new Group();
+        final Scene scene = new Scene(group, 900, 600, Color.WHITE);
+        stage.setScene(scene);
+        stage.setTitle("Inverted Pendulum Simulation");
+        stage.show();
+        //Pendulum Line
+        final Line pendulumHand = new Line(0, 175, 0, 0);
+        pendulumHand.setTranslateX(450);
+        pendulumHand.setTranslateY(350);
+
+        //Pendulum Ball
+        final Circle circle = new Circle(0, 0, 20);
+        circle.setTranslateX(450);
+        circle.setTranslateY(350);
+        circle.setFill(Color.RED);
+
+        final Rectangle rectangle = new Rectangle(350,525,200,30);
+        rectangle.setFill(Color.BLACK);
+
+        final Label label = new Label("Angular Displacement :");
+        label.setLayoutY(5);
+
+        final TextField theta = new TextField();
+        theta.setPromptText("Enter Theta Value");
+        theta.setTranslateX(165);
+
+        final Label label1 = new Label("Angular Velocity :");
+        label1.setTranslateX(400);
+        label1.setLayoutY(5);
+
+        final TextField angularVelocity = new TextField();
+        angularVelocity.setPromptText("Enter angularVelocity");
+        angularVelocity.setTranslateX(520);
+
+        final Button submitInitialConfig = new Button("Submit");
+        submitInitialConfig.setTranslateX(700);
+
+        final Button pause = new Button("Pause");
+        pause.setTranslateX(520);
+        pause.setTranslateY(300);
+
+        final TextArea textArea = new TextArea();
+        textArea.setTranslateX(50);
+        textArea.setPromptText("FuzzyController Output will be displaced");
+        textArea.setTranslateY(50);
+        textArea.setPrefWidth(700);
+        textArea.setPrefHeight(200);
+
+        final Button play = new Button("Play");
+        play.setTranslateX(520);
+        play.setTranslateY(350);
+
+        group.getChildren().add(circle);
+        group.getChildren().add(pendulumHand);
+        group.getChildren().add(rectangle);
+        group.getChildren().addAll(theta,angularVelocity,label,label1,submitInitialConfig,textArea,pause,play);
+        final Timeline[] fiveSecondsWonder = new Timeline[1];
+        submitInitialConfig.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                currentTheta = Double.parseDouble(theta.getText());
+                currentAngularVelocity = Double.parseDouble(angularVelocity.getText());
+
+                final Rotate secondRotate = new Rotate(-1*currentTheta,0,175);
+
+                //moves pendulum hand
+                fiveSecondsWonder[0] = new Timeline(new KeyFrame(Duration.seconds(.05), new EventHandler<ActionEvent>() {
+                    double displacement = Double.parseDouble(theta.getText());
+                    double velocity = Double.parseDouble(angularVelocity.getText());
+                    @Override
+                    public void handle(ActionEvent event) {
+                        Color color[] = new Color[]{Color.RED, Color.ORANGE, Color.BLUE, Color.PURPLE, Color.PINK};
+                        int itr = (int)Math.floor(Math.random() * color.length);
+                        double angularAcceleration = fc.calculateAngularAcceleration(velocity, displacement);
+                        String x = String.format( "angularVelocity.input = %s and angle.input = %s -> current.output = %s",
+                                Double.toString(velocity), Double.toString(displacement),angularAcceleration);
+                        textArea.appendText(x+"\n");
+                        displacement = displacement+velocity*0.01+0.5*angularAcceleration*0.01*0.01;
+                        velocity = velocity+angularAcceleration*.01;
+                        circle.setFill(color[itr]);
+                        pendulumHand.setFill(color[itr]);
+                        rectangle.setFill(color[itr]);
+                        secondRotate.setAngle(displacement);
+                    }
+                }));
+                fiveSecondsWonder[0].setCycleCount(Timeline.INDEFINITE);
+                pendulumHand.getTransforms().add(secondRotate);
+                circle.getTransforms().add(secondRotate);
+                fiveSecondsWonder[0].play();
+            }
+        });
+        pause.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                fiveSecondsWonder[0].pause();
+            }
+        });
+        play.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                fiveSecondsWonder[0].play();
+            }
+        });
     }
 }

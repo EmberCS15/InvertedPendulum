@@ -1,6 +1,6 @@
 package MemberShipFunctions;
 
-import Utility.MembershipUtility;
+import Utility.Utility;
 import Utility.Point;
 
 import java.util.Arrays;
@@ -27,8 +27,8 @@ public class TriangularMembership extends BaseMembershipFunction implements Memb
         this.pointB = pointB;
         this.pointC = pointC;
         configurePoints();
-        this.slopeLineAC = MembershipUtility.computeSlope(pointA, pointC);
-        this.slopeLineBC = MembershipUtility.computeSlope(pointB, pointC);
+        this.slopeLineAC = Utility.computeSlope(pointA, pointC);
+        this.slopeLineBC = Utility.computeSlope(pointB, pointC);
     }
 
     private void swap(Point a, Point b){
@@ -62,7 +62,7 @@ public class TriangularMembership extends BaseMembershipFunction implements Memb
     @Override
     public double[] getQuantityValue(double y){
         double []xValue = new double[2];
-        if(y >= MembershipUtility.membershipFunctionLowerLimit && y <= MembershipUtility.membershipFunctionUpperLimit){
+        if(y >= Utility.membershipFunctionLowerLimit && y <= Utility.membershipFunctionUpperLimit){
             Arrays.fill(xValue, y - this.pointC.getYcoord());
             xValue[0] = xValue[0] / this.slopeLineAC + this.pointC.getXcoord();
             xValue[1] = xValue[1] / this.slopeLineBC + this.pointC.getXcoord();
