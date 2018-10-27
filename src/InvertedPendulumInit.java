@@ -231,8 +231,8 @@ public class InvertedPendulumInit extends Application{
                         String x = String.format( "angularVelocity.input = %s and angle.input = %s -> current.output = %s",
                                 Double.toString(velocity), Double.toString(displacement),angularAcceleration);
                         textArea.appendText(x+"\n");
-                        displacement = displacement+velocity*0.01+0.5*angularAcceleration*0.01*0.01;
-                        velocity = velocity+angularAcceleration*.01;
+                        displacement = displacement+velocity*0.05+0.5*angularAcceleration*0.05*0.05;
+                        velocity = velocity+angularAcceleration*0.05;
                         //circle.setFill(color[itr]);
                         //pendulumHand.setFill(color[itr]);
                         //rectangle.setFill(color[itr]);
