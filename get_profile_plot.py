@@ -26,3 +26,5 @@ if __name__ == '__main__':
         # giving a title to my graph
         plt.title(profile_names[i-1])
         plt.show()
+
+# pyplot for profiles
